@@ -27,6 +27,7 @@ package reload // import "github.com/teamwork/reload"
 
 import (
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -205,4 +206,18 @@ func relpath(p string) string {
 	}
 
 	return p
+}
+
+func ListDirs(rootPath string, cb func()) (result []dir) {
+	filepath.WalkDir(rootPath, func(dirPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fs.SkipDir
+		}
+		if d.IsDir() {
+			result = append(result, Dir(dirPath, cb))
+		}
+		return nil
+	})
+
+	return
 }
