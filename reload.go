@@ -80,6 +80,8 @@ func Do(log func(string, ...interface{}), additional ...dir) error {
 	}
 	timers[binSelf] = stoppedTimer(Exec)
 
+	additional = expandAdditional(log, additional)
+
 	// Watch the directory, because a recompile renames the existing
 	// file (rather than rewriting it), so we won't get events for that.
 	dirs := make([]string, len(additional)+1)
@@ -152,6 +154,33 @@ func Do(log func(string, ...interface{}), additional ...dir) error {
 	return nil
 }
 
+func expandAdditional(log func(string, ...interface{}), additional []dir) []dir {
+	result := make([]dir, 0, len(additional))
+	for _, a := range additional {
+		if lastChar := a.path[len(a.path)-1]; lastChar == '\\' || lastChar == '/' {
+			result = append(result, listDirs(log, a.path, a.cb)...)
+		} else {
+			result = append(result, a)
+		}
+	}
+	return result
+}
+
+func listDirs(log func(string, ...interface{}), rootPath string, cb func()) (result []dir) {
+	filepath.WalkDir(rootPath, func(dirPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log("Error reading %s, skipped", dirPath)
+			return fs.SkipDir
+		}
+		if d.IsDir() {
+			result = append(result, Dir(dirPath, cb))
+		}
+		return nil
+	})
+
+	return
+}
+
 // Exec replaces the current process with a new copy of itself.
 func Exec() {
 	execName := binSelf
@@ -206,18 +235,4 @@ func relpath(p string) string {
 	}
 
 	return p
-}
-
-func ListDirs(rootPath string, cb func()) (result []dir) {
-	filepath.WalkDir(rootPath, func(dirPath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return fs.SkipDir
-		}
-		if d.IsDir() {
-			result = append(result, Dir(dirPath, cb))
-		}
-		return nil
-	})
-
-	return
 }
