@@ -5,21 +5,21 @@
 //
 // Example:
 //
-//    go func() {
-//        err := reload.Do(log.Printf)
-//        if err != nil {
-//            panic(err)
-//        }
-//    }()
+//	go func() {
+//	    err := reload.Do(log.Printf)
+//	    if err != nil {
+//	        panic(err)
+//	    }
+//	}()
 //
 // A list of additional directories to watch can be added:
 //
-//    go func() {
-//        err := reload.Do(log.Printf, reload.Dir("tpl", reloadTpl)
-//        if err != nil {
-//            panic(err)
-//        }
-//    }()
+//	go func() {
+//	    err := reload.Do(log.Printf, reload.Dir("tpl", reloadTpl)
+//	    if err != nil {
+//	        panic(err)
+//	    }
+//	}()
 //
 // Note that this package won't prevent race conditions (e.g. when assigning to
 // a global templates variable). You'll need to use sync.RWMutex yourself.
@@ -157,8 +157,10 @@ func Do(log func(string, ...interface{}), additional ...dir) error {
 func expandAdditional(log func(string, ...interface{}), additional []dir) []dir {
 	result := make([]dir, 0, len(additional))
 	for _, a := range additional {
-		if lastChar := a.path[len(a.path)-1]; lastChar == '\\' || lastChar == '/' {
-			result = append(result, listDirs(log, a.path, a.cb)...)
+		if strings.HasSuffix(a.path, "\\...") {
+			result = append(result, listDirs(log, strings.TrimSuffix(a.path, "\\..."), a.cb)...)
+		} else if strings.HasSuffix(a.path, "/...") {
+			result = append(result, listDirs(log, strings.TrimSuffix(a.path, "/..."), a.cb)...)
 		} else {
 			result = append(result, a)
 		}

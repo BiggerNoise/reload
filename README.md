@@ -39,7 +39,7 @@ func main() {
 }
 ```
 
-If the path argument to `reload.Dir()` contains a trailing slash, the directory will be evaluated recursively.
+If the path argument to `reload.Dir()` ends with /... or \..., the directory will be evaluated recursively.
 
 You can also use `reload.Exec()` to manually restart your process without
 calling `reload.Do()`.
